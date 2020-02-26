@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+var searchTemplate = `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s.zip"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
 // ArtifactService exposes the Artifact API endpoints from Artifactory
 type ArtifactService Service
 
@@ -206,7 +207,18 @@ type FileInfo struct {
 	Uri                    *string             `json:"uri,omitempty"`
 }
 
-// Description: Returns the metadata of the given file. Supported by local, local-cached and virtual repositories.
+type AqlSearchResults struct {
+	Results  []AqlResult `json:"results,omitempty"`
+}
+
+type AqlResult struct {
+	Repo                   *string             `json:"repo,omitempty"`
+	Path                   *string             `json:"path,omitempty"`
+	Name 				   *string             `json:"name,omitempty"`
+	Size 				   *int                `json:"size,omitempty"`
+}
+
+// FileInfo Returns the metadata of the given file. Supported by local, local-cached and virtual repositories.
 // Security: Requires a privileged user (can be anonymous)
 func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath string) (*FileInfo, *http.Response, error) {
 	path := fmt.Sprintf("/api/storage/%s/%s", repoKey, filePath)
@@ -222,7 +234,7 @@ func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath
 	return fileInfo, resp, err
 }
 
-// Description: Copies the specified file to the given target. Supported by local, local-cached and virtual repositories.
+// FileContents Copies the specified file to the given target. Supported by local, local-cached and virtual repositories.
 // Security: Requires a privileged user (can be anonymous)
 func (s *ArtifactService) FileContents(ctx context.Context, repoKey string, filePath string, target interface{}) (*FileInfo, *http.Response, error) {
 	if target == nil {
@@ -242,4 +254,21 @@ func (s *ArtifactService) FileContents(ctx context.Context, repoKey string, file
 
 	resp, err := s.client.Do(ctx, req, target)
 	return fileInfo, resp, err
+
+	
 }
+// SearchFiles search files using AQL language
+func (s *ArtifactService) SearchFiles(ctx context.Context, pattern string) (*AqlSearchResults, *http.Response, error)  {
+	path := "/api/search/aql"
+	body  :=  []byte(fmt.Sprintf(searchTemplate, pattern)) 
+	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, nil, err
+	}
+	req.Header.Set("Accept", mediaTypeFileInfo)
+
+	aqlresults := new(AqlSearchResults)
+	resp, err := s.client.Do(ctx, req, aqlresults)
+	return aqlresults, resp, err
+}
+
