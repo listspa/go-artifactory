@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-var searchTemplate = `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s.zip"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+var searchTemplate = `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
 // ArtifactService exposes the Artifact API endpoints from Artifactory
 type ArtifactService Service
 
