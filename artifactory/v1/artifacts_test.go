@@ -217,7 +217,7 @@ func TestSearchFiles(t *testing.T) {
 	c, _ := client.NewClient(server.URL, http.DefaultClient)
 	v := NewV1(c)
 
-	results, _, err := v.Artifacts.SearchFiles(context.Background(), "RdbManager-2.1.13d4-plat-*")
+	results, _, err := v.Artifacts.SearchFiles(context.Background(), "clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
 	assert.Nil(t, err)
 	assert.NotNil(t, results)
 	assert.NotEmpty(t, results)
@@ -252,7 +252,7 @@ func TestSearchFilesNoResults(t *testing.T) {
 	c, _ := client.NewClient(server.URL, http.DefaultClient)
 	v := NewV1(c)
 
-	results, _, err := v.Artifacts.SearchFiles(context.Background(), "RdbManager-2.1.13d4-plat-*")
+	results, _, err := v.Artifacts.SearchFiles(context.Background(),"clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
 	assert.Nil(t, err)
 	assert.NotNil(t, results)
 	assert.Equal(t, 0, len(results.Results))
@@ -276,7 +276,7 @@ func TestSearchFilesError(t *testing.T) {
 	c, _ := client.NewClient(server.URL, http.DefaultClient)
 	v := NewV1(c)
 
-	results, response, err := v.Artifacts.SearchFiles(context.Background(), "RdbManager-2.1.13d4-plat-*")
+	results, response, err := v.Artifacts.SearchFiles(context.Background(), "clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
 	assert.NotNil(t, err)
 	assert.Nil(t, results.Results)
 	assert.Equal(t, 404, response.StatusCode)

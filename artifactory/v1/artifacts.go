@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-var searchTemplate = `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
 
 // ArtifactService exposes the Artifact API endpoints from Artifactory
 type ArtifactService Service
@@ -224,13 +224,12 @@ type AqlResult struct {
 // Security: Requires a privileged user (can be anonymous)
 func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath string) (*FileInfo, *http.Response, error) {
 	path := fmt.Sprintf("/api/storage/%s/%s", repoKey, filePath)
+	log.Printf("Artifactory Storage API [%s]", path)
 	req, err := s.client.NewRequest("GET", path, nil)
 	if err != nil {
 		return nil, nil, err
 	}
-
 	req.Header.Set("Accept", mediaTypeFileInfo)
-
 	fileInfo := new(FileInfo)
 	resp, err := s.client.Do(ctx, req, fileInfo)
 	return fileInfo, resp, err
@@ -260,10 +259,10 @@ func (s *ArtifactService) FileContents(ctx context.Context, repoKey string, file
 }
 
 // SearchFiles search files using AQL language
-func (s *ArtifactService) SearchFiles(ctx context.Context, pattern string) (*AqlSearchResults, *http.Response, error) {
+func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, pattern string) (*AqlSearchResults, *http.Response, error) {
 	path := "/api/search/aql"
-	query := fmt.Sprintf(searchTemplate, pattern)
-	log.Printf("Artifactory AQL: %s", query)
+	query := fmt.Sprintf(searchTemplate, repoKey, pattern)
+	log.Printf("Artifactory AQL API [%s]: %s", path, query)
 	body := []byte(query)
 
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
