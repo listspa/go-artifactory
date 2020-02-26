@@ -263,15 +263,14 @@ func (s *ArtifactService) FileContents(ctx context.Context, repoKey string, file
 func (s *ArtifactService) SearchFiles(ctx context.Context, pattern string) (*AqlSearchResults, *http.Response, error) {
 	path := "/api/search/aql"
 	query := fmt.Sprintf(searchTemplate, pattern)
-	log.Println(query)
+	log.Printf("Artifactory AQL: %s", query)
 	body := []byte(query)
 
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, nil, err
 	}
-	req.Header.Set("Accept", mediaTypeFileInfo)
-
+	
 	aqlresults := new(AqlSearchResults)
 	resp, err := s.client.Do(ctx, req, aqlresults)
 	return aqlresults, resp, err

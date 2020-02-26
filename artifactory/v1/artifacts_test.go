@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
 	"github.com/stretchr/testify/assert"
+	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
 )
 
 func TestFileInfo(t *testing.T) {
@@ -281,5 +281,4 @@ func TestSearchFilesError(t *testing.T) {
 	assert.Nil(t, results.Results)
 	assert.Equal(t, 404, response.StatusCode)
 	assert.Equal(t, "404 Not Found", response.Status)
-
 }
