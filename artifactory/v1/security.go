@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/atlassian/go-artifactory/v2/artifactory/client"
+	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
 )
 
 type SecurityService Service

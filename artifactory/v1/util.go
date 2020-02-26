@@ -1,6 +1,6 @@
 package v1
 
-import "github.com/atlassian/go-artifactory/v2/artifactory/client"
+import "github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
 
 func String(v string) *string { return &v }
 

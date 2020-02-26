@@ -1,6 +1,6 @@
 package v1
 
-import "github.com/atlassian/go-artifactory/v2/artifactory/client"
+import "github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
 
 const (
 	mediaTypeLocalRepository   = "application/vnd.org.jfrog.artifactory.repositories.LocalRepositoryConfiguration+json"

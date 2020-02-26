@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/atlassian/go-artifactory/v2/artifactory"
-	"github.com/atlassian/go-artifactory/v2/artifactory/transport"
+	"github.com/susannamartinelli/go-artifactory/v2/artifactory"
+	"github.com/susannamartinelli/go-artifactory/v2/artifactory/transport"
 	"os"
 )
 

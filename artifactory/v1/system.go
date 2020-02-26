@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/atlassian/go-artifactory/v2/artifactory/client"
+	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
 	"net/http"
 )
 

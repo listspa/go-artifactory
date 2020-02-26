@@ -1,11 +1,11 @@
 # go-artifactory #
 go-artifactory is a Go client library for accessing the [Artifactory API](https://www.jfrog.com/confluence/display/RTF/Artifactory+REST+API)
 
-[![Build Status](https://travis-ci.org/atlassian/go-artifactory.svg?branch=master)](https://travis-ci.org/atlassian/go-artifactory)
+[![Build Status](https://travis-ci.org/susannamartinelli/go-artifactory.svg?branch=master)](https://travis-ci.org/susannamartinelli/go-artifactory)
 
 ## V2 Breaking Changes ##
 Due to the release of the new artifactory api this library has been significantly reworked. The import path has changed
-to github.com/atlassian/go-artifactory/pkg/artifactory to github.com/atlassian/go-artifactory/artifactory. 
+to github.com/susannamartinelli/go-artifactory/pkg/artifactory to github.com/susannamartinelli/go-artifactory/artifactory. 
 
 Services can now be accessed by including their API version i.e rt.V1.Security instead of rt.Security
 
@@ -16,7 +16,7 @@ Services can now be accessed by including their API version i.e rt.V1.Security i
 
 ## Usage ##
 ```go
-import "github.com/atlassian/go-artifactory/artifactory"
+import "github.com/susannamartinelli/go-artifactory/artifactory"
 ```
 
 Construct a new Artifactory client, then use the various services on the client to
@@ -60,7 +60,7 @@ For API methods that require HTTP Basic Authentication, use the BasicAuthTranspo
 package main
 
 import (
-	"github.com/atlassian/go-artifactory/pkg/artifactory"
+	"github.com/susannamartinelli/go-artifactory/pkg/artifactory"
 	"fmt"
 	"context"
 )
