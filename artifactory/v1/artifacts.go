@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 )
 
 var searchTemplate = `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+
 // ArtifactService exposes the Artifact API endpoints from Artifactory
 type ArtifactService Service
 
@@ -186,36 +188,36 @@ func (s *ArtifactService) DeleteRepositoryReplicationConfig(ctx context.Context,
 }
 
 type Checksums struct {
-	Md5                    *string             `json:"md5,omitempty"`
-	Sha1                   *string             `json:"sha1,omitempty"`
-	Sha256                 *string             `json:"sha256,omitempty"`
+	Md5    *string `json:"md5,omitempty"`
+	Sha1   *string `json:"sha1,omitempty"`
+	Sha256 *string `json:"sha256,omitempty"`
 }
 
 type FileInfo struct {
-	Repo                   *string             `json:"repo,omitempty"`
-	Path                   *string             `json:"path,omitempty"`
-	Created                *string             `json:"created,omitempty"`
-	CreatedBy              *string             `json:"createdBy,omitempty"`
-	LastModified           *string             `json:"lastModified,omitempty"`
-	ModifiedBy             *string             `json:"modifiedBy,omitempty"`
-	LastUpdated            *string             `json:"lastUpdated,omitempty"`
-	DownloadUri            *string             `json:"downloadUri,omitempty"`
-	MimeType               *string             `json:"mimeType,omitempty"`
-	Size                   *int                `json:"size,string,omitempty"`
-	Checksums              *Checksums          `json:"checksums,omitempty"`
-	OriginalChecksums      *Checksums          `json:"originalChecksums,omitempty"`
-	Uri                    *string             `json:"uri,omitempty"`
+	Repo              *string    `json:"repo,omitempty"`
+	Path              *string    `json:"path,omitempty"`
+	Created           *string    `json:"created,omitempty"`
+	CreatedBy         *string    `json:"createdBy,omitempty"`
+	LastModified      *string    `json:"lastModified,omitempty"`
+	ModifiedBy        *string    `json:"modifiedBy,omitempty"`
+	LastUpdated       *string    `json:"lastUpdated,omitempty"`
+	DownloadUri       *string    `json:"downloadUri,omitempty"`
+	MimeType          *string    `json:"mimeType,omitempty"`
+	Size              *int       `json:"size,string,omitempty"`
+	Checksums         *Checksums `json:"checksums,omitempty"`
+	OriginalChecksums *Checksums `json:"originalChecksums,omitempty"`
+	Uri               *string    `json:"uri,omitempty"`
 }
 
 type AqlSearchResults struct {
-	Results  []AqlResult `json:"results,omitempty"`
+	Results []AqlResult `json:"results,omitempty"`
 }
 
 type AqlResult struct {
-	Repo                   *string             `json:"repo,omitempty"`
-	Path                   *string             `json:"path,omitempty"`
-	Name 				   *string             `json:"name,omitempty"`
-	Size 				   *int                `json:"size,omitempty"`
+	Repo *string `json:"repo,omitempty"`
+	Path *string `json:"path,omitempty"`
+	Name *string `json:"name,omitempty"`
+	Size *int    `json:"size,omitempty"`
 }
 
 // FileInfo Returns the metadata of the given file. Supported by local, local-cached and virtual repositories.
@@ -255,12 +257,15 @@ func (s *ArtifactService) FileContents(ctx context.Context, repoKey string, file
 	resp, err := s.client.Do(ctx, req, target)
 	return fileInfo, resp, err
 
-	
 }
+
 // SearchFiles search files using AQL language
-func (s *ArtifactService) SearchFiles(ctx context.Context, pattern string) (*AqlSearchResults, *http.Response, error)  {
+func (s *ArtifactService) SearchFiles(ctx context.Context, pattern string) (*AqlSearchResults, *http.Response, error) {
 	path := "/api/search/aql"
-	body  :=  []byte(fmt.Sprintf(searchTemplate, pattern)) 
+	query := fmt.Sprintf(searchTemplate, pattern)
+	log.Println(query)
+	body := []byte(query)
+
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, nil, err
@@ -271,4 +276,3 @@ func (s *ArtifactService) SearchFiles(ctx context.Context, pattern string) (*Aql
 	resp, err := s.client.Do(ctx, req, aqlresults)
 	return aqlresults, resp, err
 }
-
