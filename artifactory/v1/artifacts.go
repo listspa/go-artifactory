@@ -11,6 +11,9 @@ import (
 )
 
 var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+func init() {
+	log.SetPrefix("Artifactory-Client")
+}
 
 // ArtifactService exposes the Artifact API endpoints from Artifactory
 type ArtifactService Service
@@ -179,6 +182,7 @@ func (s *ArtifactService) UpdateSingleRepositoryReplicationConfig(ctx context.Co
 // Notes: Requires Artifactory Pro
 // Security: Requires an admin user
 func (s *ArtifactService) DeleteRepositoryReplicationConfig(ctx context.Context, repoKey string) (*http.Response, error) {
+
 	path := fmt.Sprintf("/api/replications/%s", repoKey)
 	req, err := s.client.NewRequest("DELETE", path, nil)
 	if err != nil {
@@ -224,7 +228,7 @@ type AqlResult struct {
 // Security: Requires a privileged user (can be anonymous)
 func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath string) (*FileInfo, *http.Response, error) {
 	path := fmt.Sprintf("/api/storage/%s/%s", repoKey, filePath)
-	log.Printf("Artifactory Storage API [%s]", path)
+	log.Printf("Storage API [%s]", path)
 	req, err := s.client.NewRequest("GET", path, nil)
 	if err != nil {
 		return nil, nil, err
@@ -253,6 +257,10 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 	}
 
 	resp, err := s.client.Do(ctx, req, target)
+	if err != nil {
+		return nil, nil, err
+	}
+	log.Printf("Downloaded %s", *fileInfo.DownloadUri)
 	return fileInfo, resp, err
 
 }
@@ -278,6 +286,7 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 	if err != nil {
 		return nil, nil, err
 	}
+	log.Printf("Uploaded %s", *fileInfo.DownloadUri)
 	return fileInfo, resp, err
 
 }
@@ -287,7 +296,7 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, pattern string) (*AqlSearchResults, *http.Response, error) {
 	path := "/api/search/aql"
 	query := fmt.Sprintf(searchTemplate, repoKey, pattern)
-	log.Printf("Artifactory AQL API [%s]: %s", path, query)
+	log.Printf("AQL API [%s]: %s", path, query)
 	body := []byte(query)
 
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
