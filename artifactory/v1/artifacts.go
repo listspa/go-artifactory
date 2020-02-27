@@ -235,15 +235,14 @@ func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath
 	return fileInfo, resp, err
 }
 
-// FileContents Copies the specified file to the given target. Supported by local, local-cached and virtual repositories.
+// DownloadFileContents Copies the specified file to the given target. Supported by local, local-cached and virtual repositories.
 // Security: Requires a privileged user (can be anonymous)
-func (s *ArtifactService) FileContents(ctx context.Context, repoKey string, filePath string, target interface{}) (*FileInfo, *http.Response, error) {
+func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey string, filePath string, target interface{}) (*FileInfo, *http.Response, error) {
 	if target == nil {
 		return nil, nil, fmt.Errorf("target is not allowed to be nil")
 	}
 
 	fileInfo, _, err := s.FileInfo(ctx, repoKey, filePath)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -257,6 +256,32 @@ func (s *ArtifactService) FileContents(ctx context.Context, repoKey string, file
 	return fileInfo, resp, err
 
 }
+// UploadFileContents Copies the specified file to the given target in Artifactory
+func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, file interface{}) (*FileInfo, *http.Response, error) {
+	if file == nil {
+		return nil, nil, fmt.Errorf("file is not allowed to be nil")
+	}
+
+	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath) 
+
+	req, err := http.NewRequest("PUT", targetURL, nil )
+	if err != nil {
+		return nil, nil, err
+	}
+
+	resp, err := s.client.Do(ctx, req, file)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fileInfo, _, err := s.FileInfo(ctx, repoKey, filePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	return fileInfo, resp, err
+
+}
+
 
 // SearchFiles search files using AQL language
 func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, pattern string) (*AqlSearchResults, *http.Response, error) {
