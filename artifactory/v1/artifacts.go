@@ -15,7 +15,7 @@ import (
 var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
 
 func init() {
-	log.SetPrefix("Artifactory-Client")
+	log.SetPrefix("[Artifactory-Client] ")
 }
 
 // ArtifactService exposes the Artifact API endpoints from Artifactory
@@ -231,12 +231,12 @@ type AqlResult struct {
 // Security: Requires a privileged user (can be anonymous)
 func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath string) (*FileInfo, *http.Response, error) {
 	path := fmt.Sprintf("/api/storage/%s/%s", repoKey, filePath)
-	log.Printf("Storage API [%s]", path)
 	req, err := s.client.NewRequest("GET", path, nil)
-	if err != nil {
+		if err != nil {
 		return nil, nil, err
 	}
 	req.Header.Set("Accept", mediaTypeFileInfo)
+	log.Printf("Storage API [%s]", req.URL.String())
 	fileInfo := new(FileInfo)
 	resp, err := s.client.Do(ctx, req, fileInfo)
 	return fileInfo, resp, err
@@ -254,12 +254,12 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 	if err != nil {
 		return nil, err
 	}
-
+	log.Printf("Downloading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, file)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Downloaded [%s]", targetURL)
+	
 	return resp, err
 
 }
@@ -270,7 +270,6 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 	var b bytes.Buffer
 	var fw io.Writer
 	var req *http.Request
-
 	if file == nil {
 		return  nil, fmt.Errorf("file is not allowed to be nil")
 	}
@@ -290,13 +289,11 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 		return nil, err
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
-
+	log.Printf("Uploading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, nil)
 	if err != nil {
 		return nil, err
 	}
-	
-	log.Printf("Uploaded [%s]", targetURL)
 	return resp, err
 
 }
@@ -305,14 +302,13 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, pattern string) (*AqlSearchResults, *http.Response, error) {
 	path := "/api/search/aql"
 	query := fmt.Sprintf(searchTemplate, repoKey, pattern)
-	log.Printf("AQL API [%s]: %s", path, query)
+	
 	body := []byte(query)
-
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, nil, err
 	}
-
+	log.Printf("AQL API [%s]",req.URL.String())
 	aqlresults := new(AqlSearchResults)
 	resp, err := s.client.Do(ctx, req, aqlresults)
 	return aqlresults, resp, err
