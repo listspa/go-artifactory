@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
 )
 
 var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+
 func init() {
 	log.SetPrefix("Artifactory-Client")
 }
@@ -241,56 +244,62 @@ func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath
 
 // DownloadFileContents Copies the specified file to the given target. Supported by local, local-cached and virtual repositories.
 // Security: Requires a privileged user (can be anonymous)
-func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey string, filePath string, target interface{}) (*FileInfo, *http.Response, error) {
-	if target == nil {
-		return nil, nil, fmt.Errorf("target is not allowed to be nil")
-	}
-
-	fileInfo, _, err := s.FileInfo(ctx, repoKey, filePath)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	req, err := http.NewRequest("GET", *fileInfo.DownloadUri, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	resp, err := s.client.Do(ctx, req, target)
-	if err != nil {
-		return nil, nil, err
-	}
-	log.Printf("Downloaded %s", *fileInfo.DownloadUri)
-	return fileInfo, resp, err
-
-}
-// UploadFileContents Copies the specified file to the given target in Artifactory
-func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, file interface{}) (*FileInfo, *http.Response, error) {
+func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey string, filePath string, file io.Writer) (*http.Response, error) {
 	if file == nil {
-		return nil, nil, fmt.Errorf("file is not allowed to be nil")
+		return nil, fmt.Errorf("target is not allowed to be nil")
 	}
 
-	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath) 
-
-	req, err := http.NewRequest("PUT", targetURL, nil )
+	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath)
+	req, err := http.NewRequest("GET", targetURL, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	resp, err := s.client.Do(ctx, req, file)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	fileInfo, _, err := s.FileInfo(ctx, repoKey, filePath)
-	if err != nil {
-		return nil, nil, err
-	}
-	log.Printf("Uploaded %s", *fileInfo.DownloadUri)
-	return fileInfo, resp, err
+	log.Printf("Downloaded [%s]", targetURL)
+	return resp, err
 
 }
 
+// UploadFileContents Copies the specified file to the given target in Artifactory
+func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, mimetype string, file io.Reader) (*http.Response, error) {
+	var err error
+	var b bytes.Buffer
+	var fw io.Writer
+	var req *http.Request
+
+	if file == nil {
+		return  nil, fmt.Errorf("file is not allowed to be nil")
+	}
+
+	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath)
+	w := multipart.NewWriter(&b)
+	defer w.Close()
+	if fw, err = w.CreateFormFile(mimetype, file.(*os.File).Name()); err != nil {
+		return nil, fmt.Errorf("Error creating writer: %v", err)
+	}
+	if _, err := io.Copy(fw, file); err != nil {
+		return  nil, fmt.Errorf("Error with io.Copy: %v", err)
+	}
+	
+	req, err = http.NewRequest("PUT", targetURL, &b)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", w.FormDataContentType())
+
+	resp, err := s.client.Do(ctx, req, nil)
+	if err != nil {
+		return nil, err
+	}
+	
+	log.Printf("Uploaded [%s]", targetURL)
+	return resp, err
+
+}
 
 // SearchFiles search files using AQL language
 func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, pattern string) (*AqlSearchResults, *http.Response, error) {
@@ -303,7 +312,7 @@ func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, patte
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	aqlresults := new(AqlSearchResults)
 	resp, err := s.client.Do(ctx, req, aqlresults)
 	return aqlresults, resp, err

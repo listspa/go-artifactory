@@ -8,11 +8,13 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
+	"github.com/susannamartinelli/go-artifactory/v2/artifactory/transport"
 )
 
 func TestFileInfo(t *testing.T) {
@@ -74,33 +76,6 @@ func TestFileInfo(t *testing.T) {
 	assert.Equal(t, "/api/storage/arbitrary-repository/path/to/an/existing/artifact", *fileInfo.Uri)
 }
 
-func TestFileContents(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		res := ""
-
-		if strings.HasSuffix(r.RequestURI, "/content") {
-			w.Header().Set("Content-Type", "text/plain")
-			res = "dummy content"
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-
-			res = fmt.Sprintf(`{ "downloadUri" : "http://%s%s/content" }`, r.Host, r.RequestURI)
-		}
-
-		_, _ = fmt.Fprint(w, res)
-	}))
-
-	c, _ := client.NewClient(server.URL, http.DefaultClient)
-	v := NewV1(c)
-
-	target := bytes.NewBufferString("")
-	fileInfo, _, err := v.Artifacts.FileContents(context.Background(), "arbitrary-repository", "/path/to/an/existing/artifact", target)
-
-	assert.Equal(t, "dummy content", target.String())
-	assert.NotNil(t, fileInfo)
-	assert.Nil(t, err)
-}
 
 func TestSearchFiles(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -252,7 +227,7 @@ func TestSearchFilesNoResults(t *testing.T) {
 	c, _ := client.NewClient(server.URL, http.DefaultClient)
 	v := NewV1(c)
 
-	results, _, err := v.Artifacts.SearchFiles(context.Background(),"clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
+	results, _, err := v.Artifacts.SearchFiles(context.Background(), "clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
 	assert.Nil(t, err)
 	assert.NotNil(t, results)
 	assert.Equal(t, 0, len(results.Results))
@@ -281,4 +256,72 @@ func TestSearchFilesError(t *testing.T) {
 	assert.Nil(t, results.Results)
 	assert.Equal(t, 404, response.StatusCode)
 	assert.Equal(t, "404 Not Found", response.Status)
+}
+
+func TestDownloadFileContents(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//check wellformed request
+		assert.Equal(t, "/arbitrary-repository/path/to/an/existing/artifact", r.RequestURI)
+		assert.Equal(t, "GET", r.Method)
+		usr, pwd, ok := r.BasicAuth()
+		assert.Equal(t, "admin", usr)
+		assert.Equal(t, "password", pwd)
+		assert.True(t, ok)
+		authH := r.Header.Get("Authorization")
+		assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authH)
+
+		//response 
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "text/plain")
+		res := "dummy content"
+		_, _ = fmt.Fprint(w, res)
+	}))
+	tp := transport.BasicAuth{
+		Username: "admin",
+		Password: "password",
+	}
+	c, _ := client.NewClient(server.URL, tp.Client())
+	v := NewV1(c)
+
+	target := bytes.NewBufferString("")
+	response, err := v.Artifacts.DownloadFileContents(context.Background(), "arbitrary-repository", "path/to/an/existing/artifact", target)
+
+	assert.Equal(t, "dummy content", target.String())
+	assert.NotNil(t, 200, response.StatusCode)
+	assert.Nil(t, err)
+}
+
+
+func TestUploadFileContents(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//check wellformed request
+		assert.Equal(t, "/clibs-local/prova/path/prova.txt", r.RequestURI)
+		assert.Equal(t, "PUT", r.Method)
+		usr, pwd, ok := r.BasicAuth()
+		assert.Equal(t, "admin", usr)
+		assert.Equal(t, "password", pwd)
+		assert.True(t, ok)
+		authH := r.Header.Get("Authorization")
+		assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authH)
+		contentH := r.Header.Get("Content-Type")
+		assert.True(t, strings.HasPrefix(contentH, "multipart/form-data; boundary="))
+		//response
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		dummyRes := `{}`
+		_, _ = fmt.Fprint(w, fmt.Sprintf(dummyRes, r.Host, r.RequestURI))
+	}))
+	tp := transport.BasicAuth{
+		Username: "admin",
+		Password: "password",
+	}
+	c, _ := client.NewClient(server.URL, tp.Client())
+	v := NewV1(c)
+	file, err := os.Open("./fixtures/prova.txt")
+	assert.Nil(t, err)
+	defer file.Close()
+	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file)
+	assert.Nil(t, err)
+	assert.Equal(t, 201, response.StatusCode)
+
 }
