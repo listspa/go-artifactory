@@ -227,6 +227,11 @@ type AqlResult struct {
 	Size *int    `json:"size,omitempty"`
 }
 
+type ArtifactoryProperty struct {
+	Name string
+	Value string
+}
+
 // FileInfo Returns the metadata of the given file. Supported by local, local-cached and virtual repositories.
 // Security: Requires a privileged user (can be anonymous)
 func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath string) (*FileInfo, *http.Response, error) {
@@ -261,7 +266,7 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 }
 
 // UploadFileContents Copies the specified file to the given target in Artifactory
-func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, mimetype string, file io.Reader) (*http.Response, error) {
+func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, mimetype string, file io.Reader, props []ArtifactoryProperty) (*http.Response, error) {
 	var err error
 	var b bytes.Buffer
 	var fw io.Writer
@@ -271,6 +276,10 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 	}
 
 	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath)
+	for _, p := range props {
+		targetURL = fmt.Sprintf("%s;%s=%s", targetURL, p.Name, p.Value )
+	}
+
 	w := multipart.NewWriter(&b)
 	defer w.Close()
 	if fw, err = w.CreateFormFile(mimetype, file.(*os.File).Name()); err != nil {
