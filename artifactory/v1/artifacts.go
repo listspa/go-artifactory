@@ -308,7 +308,7 @@ func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, patte
 	if err != nil {
 		return nil, nil, err
 	}
-	log.Printf("AQL API [%s]",req.URL.String())
+	log.Printf("AQL API [%s] query [%s]",req.URL.String(), query)
 	aqlresults := new(AqlSearchResults)
 	resp, err := s.client.Do(ctx, req, aqlresults)
 	return aqlresults, resp, err
