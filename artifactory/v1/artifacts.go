@@ -233,7 +233,7 @@ func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath
 	path := fmt.Sprintf("/api/storage/%s/%s", repoKey, filePath)
 	req, err := s.client.NewRequest("GET", path, nil)
 		if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("creating new request: %v", err)
 	}
 	req.Header.Set("Accept", mediaTypeFileInfo)
 	log.Printf("Storage API [%s]", req.URL.String())
@@ -252,14 +252,10 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath)
 	req, err := http.NewRequest("GET", targetURL, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating new request: %v", err)
 	}
 	log.Printf("Downloading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, file)
-	if err != nil {
-		return nil, err
-	}
-	
 	return resp, err
 
 }
@@ -278,22 +274,19 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 	w := multipart.NewWriter(&b)
 	defer w.Close()
 	if fw, err = w.CreateFormFile(mimetype, file.(*os.File).Name()); err != nil {
-		return nil, fmt.Errorf("Error creating writer: %v", err)
+		return nil, fmt.Errorf("creating multipart for upload: %v", err)
 	}
 	if _, err := io.Copy(fw, file); err != nil {
-		return  nil, fmt.Errorf("Error with io.Copy: %v", err)
+		return  nil, fmt.Errorf("creating multipart for upload io.Copy: %v", err)
 	}
 	
 	req, err = http.NewRequest("PUT", targetURL, &b)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating new request: %v", err)
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	log.Printf("Uploading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, nil)
-	if err != nil {
-		return nil, err
-	}
 	return resp, err
 
 }
@@ -306,7 +299,7 @@ func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, patte
 	body := []byte(query)
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("creating new request: %v", err)
 	}
 	log.Printf("AQL API [%s] query [%s]",req.URL.String(), query)
 	aqlresults := new(AqlSearchResults)
