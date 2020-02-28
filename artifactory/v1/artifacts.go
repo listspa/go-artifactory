@@ -221,14 +221,20 @@ type AqlSearchResults struct {
 }
 
 type AqlResult struct {
-	Repo *string `json:"repo,omitempty"`
-	Path *string `json:"path,omitempty"`
-	Name *string `json:"name,omitempty"`
-	Size *int    `json:"size,omitempty"`
+	Repo       *string        `json:"repo,omitempty"`
+	Path       *string        `json:"path,omitempty"`
+	Name       *string        `json:"name,omitempty"`
+	Size       *int           `json:"size,omitempty"`
+	Properties *[]AqlProperty `json:"properties,omitempty"`
+}
+
+type AqlProperty struct {
+	Key   *string `json:"key,omitempty"`
+	VAlue *string `json:"values,omitempty"`
 }
 
 type ArtifactoryProperty struct {
-	Name string
+	Name  string
 	Value string
 }
 
@@ -237,7 +243,7 @@ type ArtifactoryProperty struct {
 func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath string) (*FileInfo, *http.Response, error) {
 	path := fmt.Sprintf("/api/storage/%s/%s", repoKey, filePath)
 	req, err := s.client.NewRequest("GET", path, nil)
-		if err != nil {
+	if err != nil {
 		return nil, nil, fmt.Errorf("creating new request: %v", err)
 	}
 	req.Header.Set("Accept", mediaTypeFileInfo)
@@ -272,12 +278,12 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 	var fw io.Writer
 	var req *http.Request
 	if file == nil {
-		return  nil, fmt.Errorf("file is not allowed to be nil")
+		return nil, fmt.Errorf("file is not allowed to be nil")
 	}
 
 	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath)
 	for _, p := range props {
-		targetURL = fmt.Sprintf("%s;%s=%s", targetURL, p.Name, p.Value )
+		targetURL = fmt.Sprintf("%s;%s=%s", targetURL, p.Name, p.Value)
 	}
 
 	w := multipart.NewWriter(&b)
@@ -286,9 +292,9 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 		return nil, fmt.Errorf("creating multipart for upload: %v", err)
 	}
 	if _, err := io.Copy(fw, file); err != nil {
-		return  nil, fmt.Errorf("creating multipart for upload io.Copy: %v", err)
+		return nil, fmt.Errorf("creating multipart for upload io.Copy: %v", err)
 	}
-	
+
 	req, err = http.NewRequest("PUT", targetURL, &b)
 	if err != nil {
 		return nil, fmt.Errorf("creating new request: %v", err)
@@ -304,14 +310,15 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, pattern string) (*AqlSearchResults, *http.Response, error) {
 	path := "/api/search/aql"
 	query := fmt.Sprintf(searchTemplate, repoKey, pattern)
-	
+
 	body := []byte(query)
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating new request: %v", err)
 	}
-	log.Printf("AQL API [%s] query [%s]",req.URL.String(), query)
+	log.Printf("AQL API [%s] query [%s]", req.URL.String(), query)
 	aqlresults := new(AqlSearchResults)
 	resp, err := s.client.Do(ctx, req, aqlresults)
+
 	return aqlresults, resp, err
 }

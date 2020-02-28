@@ -320,7 +320,50 @@ func TestUploadFileContents(t *testing.T) {
 	file, err := os.Open("./fixtures/prova.txt")
 	assert.Nil(t, err)
 	defer file.Close()
-	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file)
+	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file, []ArtifactoryProperty{})
+	assert.Nil(t, err)
+	assert.Equal(t, 201, response.StatusCode)
+
+}
+
+
+func TestUploadFileContentsWithProperties(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//check wellformed request
+		assert.Equal(t, "/clibs-local/prova/path/prova.txt;type=text;color=red", r.RequestURI)
+		assert.Equal(t, "PUT", r.Method)
+		usr, pwd, ok := r.BasicAuth()
+		assert.Equal(t, "admin", usr)
+		assert.Equal(t, "password", pwd)
+		assert.True(t, ok)
+		authH := r.Header.Get("Authorization")
+		assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authH)
+		contentH := r.Header.Get("Content-Type")
+		assert.True(t, strings.HasPrefix(contentH, "multipart/form-data; boundary="))
+		//response
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		dummyRes := `{}`
+		_, _ = fmt.Fprint(w, fmt.Sprintf(dummyRes, r.Host, r.RequestURI))
+	}))
+	tp := transport.BasicAuth{
+		Username: "admin",
+		Password: "password",
+	}
+	c, _ := client.NewClient(server.URL, tp.Client())
+	v := NewV1(c)
+	file, err := os.Open("./fixtures/prova.txt")
+	assert.Nil(t, err)
+	defer file.Close()
+	propt1 := ArtifactoryProperty{
+		Name: "type",
+		Value: "text",
+	}
+	propt2 := ArtifactoryProperty{
+		Name: "color",
+		Value: "red",
+	}
+	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file, []ArtifactoryProperty{propt1,propt2})
 	assert.Nil(t, err)
 	assert.Equal(t, 201, response.StatusCode)
 
