@@ -225,12 +225,12 @@ type AqlResult struct {
 	Path       *string        `json:"path,omitempty"`
 	Name       *string        `json:"name,omitempty"`
 	Size       *int           `json:"size,omitempty"`
-	Properties *[]AqlProperty `json:"properties,omitempty"`
+	Properties []AqlProperty `json:"properties,omitempty"`
 }
 
 type AqlProperty struct {
 	Key   *string `json:"key,omitempty"`
-	VAlue *string `json:"values,omitempty"`
+	Value *string `json:"value,omitempty"`
 }
 
 type ArtifactoryProperty struct {

@@ -76,7 +76,6 @@ func TestFileInfo(t *testing.T) {
 	assert.Equal(t, "/api/storage/arbitrary-repository/path/to/an/existing/artifact", *fileInfo.Uri)
 }
 
-
 func TestSearchFiles(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/search/aql", r.RequestURI)
@@ -197,10 +196,18 @@ func TestSearchFiles(t *testing.T) {
 	assert.NotNil(t, results)
 	assert.NotEmpty(t, results)
 	assert.Equal(t, 6, len(results.Results))
-	assert.NotNil(t, results.Results[0].Name)
-	assert.NotNil(t, results.Results[0].Size)
-	assert.NotNil(t, results.Results[0].Path)
-	assert.Nil(t, err)
+	
+	assert.Equal(t, "RdbManager-2.1.13d4-plat-NT9_64.zip", *results.Results[0].Name)
+	assert.Equal(t, 84600, *results.Results[0].Size)
+	assert.Equal(t, "cm/dev/libs/lift/rdb2/RdbManager/2.1.13d4", *results.Results[0].Path)
+	assert.Equal(t, "type", *results.Results[0].Properties[0].Key)
+	assert.Equal(t, "NT9_64", *results.Results[0].Properties[0].Value)
+	
+	assert.Equal(t, "RdbManager-2.1.13d4-plat-NT9_32.zip", *results.Results[1].Name)
+	assert.Equal(t, 79943, *results.Results[1].Size)
+	assert.Equal(t, "cm/dev/libs/lift/rdb2/RdbManager/2.1.13d4", *results.Results[1].Path)
+	assert.Equal(t, "type", *results.Results[1].Properties[0].Key)
+	assert.Equal(t, "NT9_32", *results.Results[1].Properties[0].Value)
 }
 
 func TestSearchFilesNoResults(t *testing.T) {
@@ -270,7 +277,7 @@ func TestDownloadFileContents(t *testing.T) {
 		authH := r.Header.Get("Authorization")
 		assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authH)
 
-		//response 
+		//response
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "text/plain")
 		res := "dummy content"
@@ -290,7 +297,6 @@ func TestDownloadFileContents(t *testing.T) {
 	assert.NotNil(t, 200, response.StatusCode)
 	assert.Nil(t, err)
 }
-
 
 func TestUploadFileContents(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -326,7 +332,6 @@ func TestUploadFileContents(t *testing.T) {
 
 }
 
-
 func TestUploadFileContentsWithProperties(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//check wellformed request
@@ -356,14 +361,14 @@ func TestUploadFileContentsWithProperties(t *testing.T) {
 	assert.Nil(t, err)
 	defer file.Close()
 	propt1 := ArtifactoryProperty{
-		Name: "type",
+		Name:  "type",
 		Value: "text",
 	}
 	propt2 := ArtifactoryProperty{
-		Name: "color",
+		Name:  "color",
 		Value: "red",
 	}
-	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file, []ArtifactoryProperty{propt1,propt2})
+	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file, []ArtifactoryProperty{propt1, propt2})
 	assert.Nil(t, err)
 	assert.Equal(t, 201, response.StatusCode)
 
