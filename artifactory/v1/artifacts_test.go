@@ -322,7 +322,6 @@ func TestUploadFileContents(t *testing.T) {
 	}
 	c, _ := client.NewClient(server.URL, tp.Client())
 	v := NewV1(c)
-
 	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", "./fixtures/prova.txt", []ArtifactoryProperty{})
 	assert.Nil(t, err)
 	assert.Equal(t, 201, response.StatusCode)
