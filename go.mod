@@ -1,4 +1,4 @@
-module github.com/susannamartinelli/go-artifactory/v2
+module github.com/listspa/go-artifactory/v2
 
 go 1.13
 

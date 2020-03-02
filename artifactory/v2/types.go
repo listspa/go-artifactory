@@ -1,7 +1,7 @@
 package v2
 
 import (
-	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
+	"github.com/listspa/go-artifactory/v2/artifactory/client"
 )
 
 type Service struct {

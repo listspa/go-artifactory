@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
-	"github.com/susannamartinelli/go-artifactory/v2/artifactory/transport"
+	"github.com/listspa/go-artifactory/v2/artifactory/client"
+	"github.com/listspa/go-artifactory/v2/artifactory/transport"
 )
 
 func TestFileInfo(t *testing.T) {

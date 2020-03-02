@@ -1,9 +1,9 @@
 package artifactory
 
 import (
-	"github.com/susannamartinelli/go-artifactory/v2/artifactory/client"
-	"github.com/susannamartinelli/go-artifactory/v2/artifactory/v1"
-	"github.com/susannamartinelli/go-artifactory/v2/artifactory/v2"
+	"github.com/listspa/go-artifactory/v2/artifactory/client"
+	"github.com/listspa/go-artifactory/v2/artifactory/v1"
+	"github.com/listspa/go-artifactory/v2/artifactory/v2"
 
 	"net/http"
 )

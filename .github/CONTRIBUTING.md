@@ -55,4 +55,4 @@ Releasing components is completely automated. The process of releasing will begi
 
 go-artifactory endeavours to avoid external dependencies and be lightweight.
 
-[IssueTracker]: https://github.com/susannamartinelli/go-artifactory/issues
+[IssueTracker]: https://github.com/listspa/go-artifactory/issues
