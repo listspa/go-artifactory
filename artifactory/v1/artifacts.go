@@ -16,8 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
-
+//var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+var searchTemplate = `items.find({ "repo": "%s", "name": { "$match": "%s" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
 func init() {
 	log.SetPrefix("[Artifactory-Client] ")
 }
