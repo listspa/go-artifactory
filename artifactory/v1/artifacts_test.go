@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -196,13 +195,13 @@ func TestSearchFiles(t *testing.T) {
 	assert.NotNil(t, results)
 	assert.NotEmpty(t, results)
 	assert.Equal(t, 6, len(results.Results))
-	
+
 	assert.Equal(t, "RdbManager-2.1.13d4-plat-NT9_64.zip", *results.Results[0].Name)
 	assert.Equal(t, 84600, *results.Results[0].Size)
 	assert.Equal(t, "cm/dev/libs/lift/rdb2/RdbManager/2.1.13d4", *results.Results[0].Path)
 	assert.Equal(t, "type", *results.Results[0].Properties[0].Key)
 	assert.Equal(t, "NT9_64", *results.Results[0].Properties[0].Value)
-	
+
 	assert.Equal(t, "RdbManager-2.1.13d4-plat-NT9_32.zip", *results.Results[1].Name)
 	assert.Equal(t, 79943, *results.Results[1].Size)
 	assert.Equal(t, "cm/dev/libs/lift/rdb2/RdbManager/2.1.13d4", *results.Results[1].Path)
@@ -310,7 +309,7 @@ func TestUploadFileContents(t *testing.T) {
 		authH := r.Header.Get("Authorization")
 		assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authH)
 		contentH := r.Header.Get("Content-Type")
-		assert.True(t, strings.HasPrefix(contentH, "multipart/form-data; boundary="))
+		assert.Equal(t, "text/plain", contentH)
 		//response
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -344,7 +343,7 @@ func TestUploadFileContentsWithProperties(t *testing.T) {
 		authH := r.Header.Get("Authorization")
 		assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authH)
 		contentH := r.Header.Get("Content-Type")
-		assert.True(t, strings.HasPrefix(contentH, "multipart/form-data; boundary="))
+		assert.Equal(t, "text/plain", contentH)
 		//response
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")

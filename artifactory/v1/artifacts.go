@@ -6,10 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
-	"mime/multipart"
 	"net/http"
-	"os"
 )
 
 var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
@@ -221,10 +220,10 @@ type AqlSearchResults struct {
 }
 
 type AqlResult struct {
-	Repo       *string        `json:"repo,omitempty"`
-	Path       *string        `json:"path,omitempty"`
-	Name       *string        `json:"name,omitempty"`
-	Size       *int           `json:"size,omitempty"`
+	Repo       *string       `json:"repo,omitempty"`
+	Path       *string       `json:"path,omitempty"`
+	Name       *string       `json:"name,omitempty"`
+	Size       *int          `json:"size,omitempty"`
 	Properties []AqlProperty `json:"properties,omitempty"`
 }
 
@@ -274,8 +273,6 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 // UploadFileContents Copies the specified file to the given target in Artifactory
 func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, mimetype string, file io.Reader, props []ArtifactoryProperty) (*http.Response, error) {
 	var err error
-	var b bytes.Buffer
-	var fw io.Writer
 	var req *http.Request
 	if file == nil {
 		return nil, fmt.Errorf("file is not allowed to be nil")
@@ -286,20 +283,15 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 		targetURL = fmt.Sprintf("%s;%s=%s", targetURL, p.Name, p.Value)
 	}
 
-	w := multipart.NewWriter(&b)
-	defer w.Close()
-	if fw, err = w.CreateFormFile(mimetype, file.(*os.File).Name()); err != nil {
-		return nil, fmt.Errorf("creating multipart for upload: %v", err)
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Print(err)
 	}
-	if _, err := io.Copy(fw, file); err != nil {
-		return nil, fmt.Errorf("creating multipart for upload io.Copy: %v", err)
-	}
-
-	req, err = http.NewRequest("PUT", targetURL, &b)
+	req, err = http.NewRequest("PUT", targetURL, bytes.NewBuffer(content))
 	if err != nil {
 		return nil, fmt.Errorf("creating new request: %v", err)
 	}
-	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Content-Type", mimetype)
 	log.Printf("Uploading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, nil)
 	return resp, err
