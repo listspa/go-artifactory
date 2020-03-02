@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -322,10 +321,8 @@ func TestUploadFileContents(t *testing.T) {
 	}
 	c, _ := client.NewClient(server.URL, tp.Client())
 	v := NewV1(c)
-	file, err := os.Open("./fixtures/prova.txt")
-	assert.Nil(t, err)
-	defer file.Close()
-	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file, []ArtifactoryProperty{})
+
+	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", "./fixtures/prova.txt", []ArtifactoryProperty{})
 	assert.Nil(t, err)
 	assert.Equal(t, 201, response.StatusCode)
 
@@ -344,6 +341,9 @@ func TestUploadFileContentsWithProperties(t *testing.T) {
 		assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authH)
 		contentH := r.Header.Get("Content-Type")
 		assert.Equal(t, "text/plain", contentH)
+		md5sum := r.Header.Get("X-Checksum-MD5")
+		assert.Equal(t, "05284e7b404c38ff2e298f75268cfd49", md5sum)
+
 		//response
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -356,9 +356,7 @@ func TestUploadFileContentsWithProperties(t *testing.T) {
 	}
 	c, _ := client.NewClient(server.URL, tp.Client())
 	v := NewV1(c)
-	file, err := os.Open("./fixtures/prova.txt")
-	assert.Nil(t, err)
-	defer file.Close()
+
 	propt1 := ArtifactoryProperty{
 		Name:  "type",
 		Value: "text",
@@ -367,7 +365,7 @@ func TestUploadFileContentsWithProperties(t *testing.T) {
 		Name:  "color",
 		Value: "red",
 	}
-	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", file, []ArtifactoryProperty{propt1, propt2})
+	response, err := v.Artifacts.UploadFileContents(context.Background(), "clibs-local", "prova/path/prova.txt", "text/plain", "./fixtures/prova.txt", []ArtifactoryProperty{propt1, propt2})
 	assert.Nil(t, err)
 	assert.Equal(t, 201, response.StatusCode)
 

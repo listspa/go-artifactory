@@ -3,12 +3,17 @@ package v1
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/pkg/errors"
 )
 
 var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
@@ -271,27 +276,38 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 }
 
 // UploadFileContents Copies the specified file to the given target in Artifactory
-func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, mimetype string, file io.Reader, props []ArtifactoryProperty) (*http.Response, error) {
+func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, mimetype string, localfile string, props []ArtifactoryProperty) (*http.Response, error) {
 	var err error
 	var req *http.Request
-	if file == nil {
-		return nil, fmt.Errorf("file is not allowed to be nil")
-	}
-
+	
 	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath)
 	for _, p := range props {
 		targetURL = fmt.Sprintf("%s;%s=%s", targetURL, p.Name, p.Value)
 	}
-
-	content, err := ioutil.ReadAll(file)
+	//content
+	content, err := ioutil.ReadFile(localfile)
 	if err != nil {
-		fmt.Print(err)
+		return nil, errors.Wrapf(err, "reading file content [%s]", filePath)
 	}
+
+	//md5sum
+	file, err := os.Open(localfile)
+	if err != nil {
+		return nil, errors.Wrapf(err, "opening file [%s]", filePath)
+	}
+	defer file.Close()
+	hash := md5.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return nil, errors.Wrapf(err, "reading file m5dsum [%s]", filePath)
+	}
+	hashInBytes := hash.Sum(nil)[:16]
+	
 	req, err = http.NewRequest("PUT", targetURL, bytes.NewBuffer(content))
 	if err != nil {
 		return nil, fmt.Errorf("creating new request: %v", err)
 	}
 	req.Header.Set("Content-Type", mimetype)
+	req.Header.Set("X-Checksum-MD5", hex.EncodeToString(hashInBytes))
 	log.Printf("Uploading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, nil)
 	return resp, err
