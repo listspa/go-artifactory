@@ -17,7 +17,6 @@ import (
 )
 
 //var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
-var searchTemplate = `items.find({ "repo": "%s", "name": { "$match": "%s" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
 func init() {
 	log.SetPrefix("[Artifactory-Client] ")
 }
@@ -279,7 +278,7 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string, filePath string, mimetype string, localfile string, props []ArtifactoryProperty) (*http.Response, error) {
 	var err error
 	var req *http.Request
-	
+
 	targetURL := fmt.Sprintf("%s%s/%s", s.client.BaseURL.String(), repoKey, filePath)
 	for _, p := range props {
 		targetURL = fmt.Sprintf("%s;%s=%s", targetURL, p.Name, p.Value)
@@ -301,7 +300,7 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 		return nil, errors.Wrapf(err, "reading file m5dsum [%s]", filePath)
 	}
 	hashInBytes := hash.Sum(nil)[:16]
-	
+
 	req, err = http.NewRequest("PUT", targetURL, bytes.NewBuffer(content))
 	if err != nil {
 		return nil, fmt.Errorf("creating new request: %v", err)
@@ -314,10 +313,9 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 
 }
 
-// SearchFiles search files using AQL language
-func (s *ArtifactService) SearchFiles(ctx context.Context, repoKey string, pattern string) (*AqlSearchResults, *http.Response, error) {
+// SearchByAQL search files using AQL language
+func (s *ArtifactService) SearchByAQL(ctx context.Context, query string) (*AqlSearchResults, *http.Response, error) {
 	path := "/api/search/aql"
-	query := fmt.Sprintf(searchTemplate, repoKey, pattern)
 
 	body := []byte(query)
 	req, err := s.client.NewRequest("POST", path, bytes.NewBuffer(body))

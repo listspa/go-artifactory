@@ -15,6 +15,7 @@ import (
 	"github.com/listspa/go-artifactory/v2/artifactory/transport"
 )
 
+
 func TestFileInfo(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/storage/arbitrary-repository/path/to/an/existing/artifact", r.RequestURI)
@@ -82,7 +83,7 @@ func TestSearchFiles(t *testing.T) {
 			log.Fatal(err)
 		}
 		bodyString := string(bodyBytes)
-		assert.Equal(t, `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "RdbManager-2.1.13d4-plat-*.zip"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`, bodyString)
+		assert.Equal(t, `items.find({ "repo": "clibs-local", "name": { "$match": "RdbManager-2.1.13d4-plat-*.zip" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`, bodyString)
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		dummyRes := `{
@@ -188,8 +189,8 @@ func TestSearchFiles(t *testing.T) {
 	}))
 	c, _ := client.NewClient(server.URL, http.DefaultClient)
 	v := NewV1(c)
-
-	results, _, err := v.Artifacts.SearchFiles(context.Background(), "clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
+    query := `items.find({ "repo": "clibs-local", "name": { "$match": "RdbManager-2.1.13d4-plat-*.zip" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+	results, _, err := v.Artifacts.SearchByAQL(context.Background(), query)
 	assert.Nil(t, err)
 	assert.NotNil(t, results)
 	assert.NotEmpty(t, results)
@@ -216,7 +217,7 @@ func TestSearchFilesNoResults(t *testing.T) {
 			log.Fatal(err)
 		}
 		bodyString := string(bodyBytes)
-		assert.Equal(t, `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "RdbManager-2.1.13d4-plat-*.zip"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`, bodyString)
+		assert.Equal(t, `items.find({ "repo": "clibs-local", "name": { "$match": "RdbManager-2.1.13d4-plat-*.zip" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`, bodyString)
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
 		dummyRes := `{
@@ -231,8 +232,8 @@ func TestSearchFilesNoResults(t *testing.T) {
 	}))
 	c, _ := client.NewClient(server.URL, http.DefaultClient)
 	v := NewV1(c)
-
-	results, _, err := v.Artifacts.SearchFiles(context.Background(), "clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
+    query := `items.find({ "repo": "clibs-local", "name": { "$match": "RdbManager-2.1.13d4-plat-*.zip" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+	results, _, err := v.Artifacts.SearchByAQL(context.Background(), query)
 	assert.Nil(t, err)
 	assert.NotNil(t, results)
 	assert.Equal(t, 0, len(results.Results))
@@ -247,7 +248,7 @@ func TestSearchFilesError(t *testing.T) {
 			log.Fatal(err)
 		}
 		bodyString := string(bodyBytes)
-		assert.Equal(t, `items.find({"repo": "clibs-local","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "RdbManager-2.1.13d4-plat-*.zip"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`, bodyString)
+		assert.Equal(t, `items.find({ "repo": "clibs-local", "name": { "$match": "RdbManager-2.1.13d4-plat-*.zip" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`, bodyString)
 		w.WriteHeader(http.StatusNotFound)
 		w.Header().Set("Content-Type", "application/json")
 		dummyRes := `{"errors": [{"status": 404,"message": "Not Found"}]}`
@@ -255,8 +256,8 @@ func TestSearchFilesError(t *testing.T) {
 	}))
 	c, _ := client.NewClient(server.URL, http.DefaultClient)
 	v := NewV1(c)
-
-	results, response, err := v.Artifacts.SearchFiles(context.Background(), "clibs-local", "RdbManager-2.1.13d4-plat-*.zip")
+	query := `items.find({ "repo": "clibs-local", "name": { "$match": "RdbManager-2.1.13d4-plat-*.zip" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
+	results, response, err := v.Artifacts.SearchByAQL(context.Background(), query)
 	assert.NotNil(t, err)
 	assert.Nil(t, results.Results)
 	assert.Equal(t, 404, response.StatusCode)
