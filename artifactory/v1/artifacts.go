@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 
@@ -17,9 +17,6 @@ import (
 )
 
 //var searchTemplate = `items.find({"repo": "%s","path": {"$ne": "."},"$or": [{"$and":[{"path": {"$match": "*"},"name": {"$match": "%s"}}]}]}).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`
-func init() {
-	log.SetPrefix("[Artifactory-Client] ")
-}
 
 // ArtifactService exposes the Artifact API endpoints from Artifactory
 type ArtifactService Service
@@ -250,7 +247,7 @@ func (s *ArtifactService) FileInfo(ctx context.Context, repoKey string, filePath
 		return nil, nil, fmt.Errorf("creating new request: %v", err)
 	}
 	req.Header.Set("Accept", mediaTypeFileInfo)
-	log.Printf("Storage API [%s]", req.URL.String())
+	log.Debugf("[Artifactory Client] Storage API [%s]", req.URL.String())
 	fileInfo := new(FileInfo)
 	resp, err := s.client.Do(ctx, req, fileInfo)
 	return fileInfo, resp, err
@@ -268,7 +265,7 @@ func (s *ArtifactService) DownloadFileContents(ctx context.Context, repoKey stri
 	if err != nil {
 		return nil, fmt.Errorf("creating new request: %v", err)
 	}
-	log.Printf("Downloading API [%s]", req.URL.String())
+	log.Debugf("[Artifactory Client] Downloading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, file)
 	return resp, err
 
@@ -307,7 +304,7 @@ func (s *ArtifactService) UploadFileContents(ctx context.Context, repoKey string
 	}
 	req.Header.Set("Content-Type", mimetype)
 	req.Header.Set("X-Checksum-MD5", hex.EncodeToString(hashInBytes))
-	log.Printf("Uploading API [%s]", req.URL.String())
+	log.Debugf("[Artifactory Client] Uploading API [%s]", req.URL.String())
 	resp, err := s.client.Do(ctx, req, nil)
 	return resp, err
 
@@ -322,7 +319,7 @@ func (s *ArtifactService) SearchByAQL(ctx context.Context, query string) (*AqlSe
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating new request: %v", err)
 	}
-	log.Printf("AQL API [%s] query [%s]", req.URL.String(), query)
+	log.Debugf("[Artifactory Client] AQL API [%s] query [%s]", req.URL.String(), query)
 	aqlresults := new(AqlSearchResults)
 	resp, err := s.client.Do(ctx, req, aqlresults)
 

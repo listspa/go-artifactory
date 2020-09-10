@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/listspa/go-artifactory/v2/artifactory"
 	"github.com/listspa/go-artifactory/v2/artifactory/transport"
-	"os"
 )
 
 func main() {
@@ -13,7 +14,7 @@ func main() {
 		ApiKey: os.Getenv("ARTIFACTORY_API_KEY"),
 	}
 
-	client, err := artifactory.NewClient(os.Getenv("ARTIFACTORY_URL"), tp.Client())
+	client, err := artifactory.NewClient(os.Getenv("ARTIFACTORY_URL"), tp.Client(), "debug")
 	if err != nil {
 		fmt.Printf("\nerror: %v\n", err)
 		return

@@ -4,7 +4,7 @@ import (
 	"github.com/listspa/go-artifactory/v2/artifactory/client"
 	"github.com/listspa/go-artifactory/v2/artifactory/v1"
 	"github.com/listspa/go-artifactory/v2/artifactory/v2"
-
+	 log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -15,9 +15,14 @@ type Artifactory struct {
 }
 
 // NewClient creates a Artifactory from a provided base url for an artifactory instance and a service Artifactory
-func NewClient(baseURL string, httpClient *http.Client) (*Artifactory, error) {
+func NewClient(baseURL string, httpClient *http.Client, loglvl string) (*Artifactory, error) {
+	lvl, err := log.ParseLevel(loglvl)
+	if err != nil {
+		log.Printf(err.Error())
+	}
+	log.SetLevel(lvl)
+	//log.SetReportCaller(true)
 	c, err := client.NewClient(baseURL, httpClient)
-
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@ func TestE2E(t *testing.T) {
 		Username: "admin",
 		Password: "password",
 	}
-	c, _ := client.NewClient("http://localhost:8081/artifactory", tp.Client())
+	c, _ := client.NewClient("http://localhost:8091/artifactory", tp.Client())
 	v := NewV1(c)
 	props := []ArtifactoryProperty{}
 
@@ -32,6 +32,7 @@ func TestE2E(t *testing.T) {
 	props = append(props, p2)
 	response, err := v.Artifacts.UploadFileContents(context.Background(), "example-repo-local", "prova/path/prova.txt", "text/plain", "./fixtures/prova.txt", props)
 	assert.Nil(t, err)
+	
 	assert.Equal(t, 201, response.StatusCode)
 
 	query := `items.find({ "repo": "example-repo-local", "name": { "$match": "prova.txt" } }).include("name","repo","path","actual_md5","actual_sha1","size","type","property")`

@@ -18,7 +18,7 @@ Construct a new Artifactory client, then use the various services on the client 
 access different parts of the Artifactory API. For example:
 
 ```go
-client := artifactory.NewClient(client, nil)
+client := artifactory.NewClient(client, nil, "info")
 
 // list all repositories
 repos, resp, err := client.V1.Repositories.List(context.Background(), nil)
@@ -27,7 +27,7 @@ repos, resp, err := client.V1.Repositories.List(context.Background(), nil)
 Some API methods have optional parameters that can be passed. For example:
 
 ```go
-client := artifactroy.NewClient(client, nil)
+client := artifactroy.NewClient(client, nil, "debug")
 
 // list all public local repositories
 opt := &artifactory.RepositoryListOptions{Type: "local"}

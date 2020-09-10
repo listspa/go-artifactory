@@ -26,7 +26,7 @@ func TestBasicAuthTransport(t *testing.T) {
 		Password: "password",
 	}
 
-	rt, err := artifactory.NewClient(server.URL, tp.Client())
+	rt, err := artifactory.NewClient(server.URL, tp.Client(), "debug")
 	assert.Nil(t, err)
 
 	_, _, err = rt.V1.System.Ping(context.Background())

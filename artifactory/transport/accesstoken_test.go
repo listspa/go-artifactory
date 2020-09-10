@@ -3,11 +3,12 @@ package transport
 import (
 	"context"
 	"fmt"
-	"github.com/listspa/go-artifactory/v2/artifactory"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/listspa/go-artifactory/v2/artifactory"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAccessTokenTransport(t *testing.T) {
@@ -24,7 +25,7 @@ func TestAccessTokenTransport(t *testing.T) {
 		AccessToken: "sometoken",
 	}
 
-	rt, err := artifactory.NewClient(server.URL, tp.Client())
+	rt, err := artifactory.NewClient(server.URL, tp.Client(), "debug")
 	assert.Nil(t, err)
 
 	_, _, err = rt.V1.System.Ping(context.Background())

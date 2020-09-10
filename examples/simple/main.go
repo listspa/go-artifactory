@@ -16,7 +16,7 @@ func main() {
 		Password: os.Getenv("ARTIFACTORY_PASSWORD"),
 	}
 
-	client, err := artifactory.NewClient(os.Getenv("ARTIFACTORY_URL"), tp.Client())
+	client, err := artifactory.NewClient(os.Getenv("ARTIFACTORY_URL"), tp.Client(), "debug")
 	if err != nil {
 		fmt.Printf("\nerror: %v\n", err)
 		return
